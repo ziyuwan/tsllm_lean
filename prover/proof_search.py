@@ -329,7 +329,7 @@ class CpuProver(BestFirstSearchProver):
         )
 
 
-@ray.remote(num_gpus=1)
+@ray.remote(num_gpus=0.125)
 class GpuProver(BestFirstSearchProver):
     """Ray actor for running an instance of `BestFirstSearchProver` on a GPU."""
 
@@ -418,6 +418,7 @@ class DistributedProver:
                     module,
                     timeout=timeout,
                     num_sampled_tactics=num_sampled_tactics,
+                    generator_config=generator_config,
                     debug=debug,
                 )
                 for _ in range(num_cpus)
