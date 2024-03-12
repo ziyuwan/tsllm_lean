@@ -38,7 +38,6 @@ if __name__ == "__main__":
         num_total_nodes += r.num_total_nodes
         num_searched_nodes += r.num_searched_nodes
     
-    import pdb; pdb.set_trace() 
     
     print("Proved:", num_proved)
     print("Failed:", num_failed)
