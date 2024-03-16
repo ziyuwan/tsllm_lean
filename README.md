@@ -18,4 +18,17 @@ modify `--data-path` and `--ckpt-path` in `run_tp.sh`, the maximal value of `num
 ```
 export PYTHONPATH=$(pwd)
 sh run_tp.sh
+
+# original best-first-search
+sh run_tp_bfs.sh
+```
+
+## important env variables
+```
+export TMP_DIR= {where to create tmp files}
+export CACHE_DIR= {where you trace_repos}
+
+
+export TACTIC_CPU_LIMIT= {#threads when launch lean4 services}
+export RAY_NUM_GPU_PER_WORKER= {gpu resources for each worker}
 ```

@@ -30,6 +30,9 @@ from prover.search_tree import *
 from generator.model import FixedTacticGenerator
 from generator.simplified_model import SimpleRetrievalAugmentedGenerator, GeneratorConfig
 
+import os
+
+RAY_NUM_GPU_PER_WORKER=float(os.environ.get('RAY_NUM_GPU_PER_WORKER', 1))
 
 @dataclass(frozen=True)
 class SearchResult:
@@ -329,7 +332,7 @@ class CpuProver(BestFirstSearchProver):
         )
 
 
-@ray.remote(num_gpus=0.125)
+@ray.remote(num_gpus=RAY_NUM_GPU_PER_WORKER)
 class GpuProver(BestFirstSearchProver):
     """Ray actor for running an instance of `BestFirstSearchProver` on a GPU."""
 

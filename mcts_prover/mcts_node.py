@@ -105,6 +105,7 @@ class InternalTreeNode(Node):
     state: TacticState = field(compare=True)
 
     critic_value: float = field(default=None, init=True, compare=False)
+    cum_logp: float = field(default=0.0, init=True, compare=False)
 
 
     # All edges out of this node that we've considered, or None for unexplored nodes.

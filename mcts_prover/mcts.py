@@ -41,6 +41,9 @@ from prover.proof_search import SearchResult
 from loguru import logger
 from ray.util.actor_pool import ActorPool
 
+import os
+
+RAY_NUM_GPU_PER_WORKER=float(os.environ.get('RAY_NUM_GPU_PER_WORKER', 1))
 
 @dataclass
 class MCTSConfig:
@@ -153,7 +156,6 @@ class MCTSProver:
                 logger.info("Found a proof!")
                 break
 
-
     def _simulation(self, node: InternalTreeNode):
         """
         select from given node untill a leaf node and then
@@ -164,7 +166,7 @@ class MCTSProver:
         while not node.is_leaf:
             tactic, node = self._select_child(node)
             logger.debug(f"Select tactic: {tactic}")
-        
+
         if not node.is_terminal:
             if isinstance(node.state, TacticState):
                 ts = node.state.pp
@@ -178,12 +180,12 @@ class MCTSProver:
             node.out_edges = results
             # TODO(ziyu): compute_value here or in _run_tactics or in _generate_tactics,
             #  For me I think here is the most flexible
-        
+
             self.num_expansions += 1
             self.num_total_nodes += len(results)
-            
+
         node.backup(node.value)
-       
+
     def _select_child(self, node: InternalTreeNode):
         assert len(node.out_edges) > 0, node
 
@@ -241,7 +243,12 @@ class MCTSProver:
             result_node = ErrorNode(response)
         else:
             assert isinstance(response, TacticState)
-            result_node = InternalTreeNode(state=response, critic_value=0.0)
+            result_node = InternalTreeNode(
+                state=response, 
+                critic_value=0.0, 
+                # critic_value=node.cum_logp + logprob, 
+                cum_logp=node.cum_logp + logprob
+            )
 
         edge = Edge(tactic=tactic, logp=logprob, src=node, dst=result_node)
         result_node.in_edge = edge
@@ -282,7 +289,8 @@ class CpuProver(MCTSProver):
             debug,
         )
 
-@ray.remote(num_gpus=0.25)
+
+@ray.remote(num_gpus=RAY_NUM_GPU_PER_WORKER)
 class GpuProver(MCTSProver):
     """Ray actor for running an instance of `BestFirstSearchProver` on a GPU."""
 
@@ -318,6 +326,7 @@ class GpuProver(MCTSProver):
             mcts_config,
             debug,
         )
+
 
 class DistributedProver:
     """A distributed prover that uses Ray to parallelize the proof search.
