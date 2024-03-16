@@ -107,7 +107,7 @@ def evaluate(
     verbose: bool = False,
 ) -> float:
     set_logger(verbose)
-
+    logger.add("bfs_{time}.log")
     repo, theorems, positions = _get_theorems(
         data_path, split, file_path, full_name, name_filter, num_theorems
     )
