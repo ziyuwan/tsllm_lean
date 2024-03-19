@@ -45,13 +45,23 @@ def _directed_edge_to_dict(edge: Edge):
     return {
         # "src": _node_to_dict(edge.src),
         "type": "OutEdge",
+        "tactic": edge.tactic,
+        "logp": edge.logp,
         "dst": _node_to_dict(edge.dst)
     }
 
 
 def _tactic_state_to_dict(state: TacticState):
-    return {
-        "pp": state.pp,
-        "id": state.id,
-        "message": state.message,
-    }
+    if isinstance(state, TacticState):
+        ts = state.pp
+        return {
+            "ts": ts,
+            "id": state.id,
+            "message": state.message,
+        }
+
+    else:
+        ts = state.unsolved_tactic_state
+        return {
+            "ts": ts,
+        }

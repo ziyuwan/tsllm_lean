@@ -29,6 +29,7 @@ from mcts_prover.mcts_node import (
     ErrorNode,
     InternalTreeNode,
 )
+from mcts_prover.save_tree import _node_to_dict, _find_tree_root
 from mcts_prover.ucb import compute_puct
 from generator.model import FixedTacticGenerator
 from generator.simplified_model import (
@@ -125,6 +126,9 @@ class MCTSProver:
                 num_searched_nodes=self.num_expansions,
             )
             logger.info(result)
+            # tmp = _node_to_dict(self.root)
+            # import json
+            # json.dump(tmp, open("tmp.json", "w"))
             return result
 
         except DojoInitError as ex:
