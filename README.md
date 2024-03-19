@@ -3,8 +3,29 @@
 ## Installation
 see `original_README` or the [online version](https://github.com/lean-dojo/ReProver?tab=readme-ov-file#requirements)
 
+### Offline Running Version
+Install my fork of pure offline mode
+```
+git clone git@github.com:ziyuwan/ZYLeanDojo.git
+cd ZYLeanDojo
+git checkout offline_mode
+
+pip install -e .
+```
+After `trace_repos.py`
+```
+# export CACHE_DIR={your cache dir}
+
+PURE_OFFLINE_MODE=0 python get_offline_cache.py --data-path {the data path} --split test
+```
+
+
+
 ### Data Preparation
 see `original_README` or the [online version](https://github.com/lean-dojo/ReProver?tab=readme-ov-file#requirements)
+
+
+
 
 ### Download Model
 Just clone the tac_gen model
@@ -32,3 +53,4 @@ export CACHE_DIR= {where you trace_repos}
 export TACTIC_CPU_LIMIT= {#threads when launch lean4 services}
 export RAY_NUM_GPU_PER_WORKER= {gpu resources for each worker}
 ```
+

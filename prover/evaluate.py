@@ -14,6 +14,8 @@ from generator.simplified_model import GeneratorConfig
 
 from common import set_logger
 from prover.proof_search import Status, DistributedProver
+from lean_dojo.data_extraction.lean import PURE_OFFLINE_MODE
+from pathlib import Path
 
 
 def _get_theorems(
@@ -50,37 +52,53 @@ def _get_theorems_from_files(
     name_filter: Optional[str],
     num_theorems: Optional[int],
 ) -> Tuple[LeanGitRepo, List[Theorem], List[Pos]]:
-    data = json.load(open(os.path.join(data_path, f"{split}.json")))
-    theorems = []
-    positions = []
+    if not PURE_OFFLINE_MODE:
+        data = json.load(open(os.path.join(data_path, f"{split}.json")))
+        theorems = []
+        positions = []
 
-    for t in data:
-        if file_path is not None and t["file_path"] != file_path:
-            continue
-        if full_name is not None and t["full_name"] != full_name:
-            continue
-        if name_filter is not None and not hashlib.md5(
-            t["full_name"].encode()
-        ).hexdigest().startswith(name_filter):
-            continue
-        repo = LeanGitRepo(t["url"], t["commit"])
-        theorems.append(Theorem(repo, t["file_path"], t["full_name"]))
-        positions.append(Pos(*t["start"]))
+        for t in data:
+            if file_path is not None and t["file_path"] != file_path:
+                continue
+            if full_name is not None and t["full_name"] != full_name:
+                continue
+            if name_filter is not None and not hashlib.md5(
+                t["full_name"].encode()
+            ).hexdigest().startswith(name_filter):
+                continue
+            repo = LeanGitRepo(t["url"], t["commit"])
+            theorems.append(Theorem(repo, t["file_path"], t["full_name"]))
+            positions.append(Pos(*t["start"]))
 
-    # theorems = sorted(
-    #     theorems,
-    #     key=lambda t: hashlib.md5(
-    #         (str(t.file_path) + ":" + t.full_name).encode()
-    #     ).hexdigest(),
-    # )
-    if num_theorems is not None:
-        theorems = theorems[:num_theorems]
-        positions = positions[:num_theorems]
-    logger.info(f"{len(theorems)} theorems loaded from {data_path}")
+        # theorems = sorted(
+        #     theorems,
+        #     key=lambda t: hashlib.md5(
+        #         (str(t.file_path) + ":" + t.full_name).encode()
+        #     ).hexdigest(),
+        # )
+        if num_theorems is not None:
+            theorems = theorems[:num_theorems]
+            positions = positions[:num_theorems]
+        logger.info(f"{len(theorems)} theorems loaded from {data_path}")
 
-    metadata = json.load(open(os.path.join(data_path, "../metadata.json")))
-    repo = LeanGitRepo(metadata["from_repo"]["url"], metadata["from_repo"]["commit"])
+        metadata = json.load(open(os.path.join(data_path, "../metadata.json")))
+        repo = LeanGitRepo(metadata["from_repo"]["url"], metadata["from_repo"]["commit"])
+        cached_git_data = {"meta_repo": repo, "theorems": theorems, "positions": positions}
+        pickle.dump(cached_git_data, open(Path(data_path)/f"cached_repo_{split}.pickle", "wb"))
+        print("Dump to ", Path(data_path)/f"cached_repo_{split}.pickle")
+    else:
+        cached_git_data = pickle.load(open(Path(data_path)/f"cached_repo_{split}.pickle", "rb"))
+        repo = cached_git_data["meta_repo"]
+        theorems = cached_git_data["theorems"]
+        positions = cached_git_data["positions"]
 
+        def _test_repo(r):
+            r.get_packages_dir()
+            r.get_build_dir()
+        _test_repo(repo)
+        for thm in theorems:
+            _test_repo(thm.repo)
+        
     return repo, theorems, positions
 
 
