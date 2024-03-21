@@ -13,12 +13,14 @@ git checkout offline_mode
 pip install -e .
 ```
 After `trace_repos.py`
+
 ```
 # export CACHE_DIR={your cache dir}
+# export TMP_DIR={your tmp dir}
 
-PURE_OFFLINE_MODE=0 python get_offline_cache.py --data-path {the data path} --split test
+PURE_OFFLINE_MODE=0 python get_offline_cache.py --data-path {the data path} --split test --num-build-workers {NUM_WORKER}
 ```
-
+It will first save a cached pickle for each repos and theorems. Then it will try to build each theorem with `num-build-workers` to download all dependencies.
 
 
 ### Data Preparation
