@@ -1,5 +1,6 @@
 """Script for evaluating the prover on theorems extracted by LeanDojo.
 """
+
 import os
 import uuid
 import json
@@ -83,12 +84,22 @@ def _get_theorems_from_files(
         logger.info(f"{len(theorems)} theorems loaded from {data_path}")
 
         metadata = json.load(open(os.path.join(data_path, "../metadata.json")))
-        repo = LeanGitRepo(metadata["from_repo"]["url"], metadata["from_repo"]["commit"])
-        cached_git_data = {"meta_repo": repo, "theorems": theorems, "positions": positions}
-        pickle.dump(cached_git_data, open(Path(data_path)/f"cached_repo_{split}.pickle", "wb"))
-        print("Dump to ", Path(data_path)/f"cached_repo_{split}.pickle")
+        repo = LeanGitRepo(
+            metadata["from_repo"]["url"], metadata["from_repo"]["commit"]
+        )
+        cached_git_data = {
+            "meta_repo": repo,
+            "theorems": theorems,
+            "positions": positions,
+        }
+        pickle.dump(
+            cached_git_data, open(Path(data_path) / f"cached_repo_{split}.pickle", "wb")
+        )
+        print("Dump to ", Path(data_path) / f"cached_repo_{split}.pickle")
     else:
-        cached_git_data = pickle.load(open(Path(data_path)/f"cached_repo_{split}.pickle", "rb"))
+        cached_git_data = pickle.load(
+            open(Path(data_path) / f"cached_repo_{split}.pickle", "rb")
+        )
         repo = cached_git_data["meta_repo"]
         theorems = cached_git_data["theorems"]
         positions = cached_git_data["positions"]
@@ -96,10 +107,11 @@ def _get_theorems_from_files(
         def _test_repo(r):
             r.get_packages_dir()
             r.get_build_dir()
+
         _test_repo(repo)
         for thm in theorems:
             _test_repo(thm.repo)
-        
+
     return repo, theorems, positions
 
 

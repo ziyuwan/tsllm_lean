@@ -1,4 +1,5 @@
 """Script to download LeanDojo Benchmark and LeanDojo Benchmark 4 into `./data`."""
+
 import os
 import argparse
 from hashlib import md5

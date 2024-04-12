@@ -21,6 +21,7 @@ class Status(Enum):
     FAILED = "Failed"  # This node (or search) has exhausted its options and cannot be proved within the current run.
     OPEN = "Open"  # This node (or search) has not been proven or given up on yet.
 
+
 class Node(ABC):
     _value_sum: float = 0.0
     visit_count: int = 0
@@ -35,7 +36,7 @@ class Node(ABC):
             self.visit_count += 1
         if not self.is_root:
             self.in_edge.src.backup(value)
-    
+
     @property
     @abstractmethod
     def status(self) -> Status:
@@ -61,7 +62,7 @@ class Node(ABC):
     @abstractmethod
     def is_root(self) -> bool:
         raise NotImplementedError
-    
+
     @property
     @abstractmethod
     def is_leaf(self) -> bool:
@@ -106,7 +107,6 @@ class InternalTreeNode(Node):
 
     critic_value: float = field(default=None, init=True, compare=False)
     cum_logp: float = field(default=0.0, init=True, compare=False)
-
 
     # All edges out of this node that we've considered, or None for unexplored nodes.
     # When a node is explored, this list is populated, and must not change after that.
@@ -205,8 +205,6 @@ class InternalTreeNode(Node):
         else:
             return self._value_sum / self.visit_count
 
-
-
     def __lt__(self, other: "InternalTreeNode") -> bool:
         return self.value < other.value
 
@@ -233,7 +231,7 @@ class InternalTreeNode(Node):
             child_proof = proving_edge.dst.extract_proof()
             assert child_proof
             return [proving_edge, *child_proof]
-    
+
     @property
     def is_root(self):
         if self.in_edge is None:

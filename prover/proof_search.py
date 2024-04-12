@@ -1,5 +1,6 @@
 """Proof search using best-first search.
 """
+
 import os
 import sys
 import ray
@@ -29,11 +30,15 @@ from ray.util.actor_pool import ActorPool
 from common import zip_strict
 from prover.search_tree import *
 from generator.model import FixedTacticGenerator
-from generator.simplified_model import SimpleRetrievalAugmentedGenerator, GeneratorConfig
+from generator.simplified_model import (
+    SimpleRetrievalAugmentedGenerator,
+    GeneratorConfig,
+)
 
 import os
 
-RAY_NUM_GPU_PER_WORKER=float(os.environ.get('RAY_NUM_GPU_PER_WORKER', 1))
+RAY_NUM_GPU_PER_WORKER = float(os.environ.get("RAY_NUM_GPU_PER_WORKER", 1))
+
 
 @dataclass(frozen=True)
 class SearchResult:
@@ -70,7 +75,7 @@ class BestFirstSearchProver:
         self.actor_time = 0.0
         self.environment_time = 0.0
         self.total_time = None
-    
+
     def add_logger(self, logger_path: str):
         print("Logging to {}".format(logger_path))
         assert Path(logger_path).parent.exists()
@@ -448,7 +453,7 @@ class DistributedProver:
                 )
                 for _ in range(num_cpus)
             ]
-        
+
         # XXX(ziyu): make sure the logger path can be access on each node
         if logger_path is not None:
             for prover in provers:

@@ -45,7 +45,8 @@ from ray.util.actor_pool import ActorPool
 
 import os
 
-RAY_NUM_GPU_PER_WORKER=float(os.environ.get('RAY_NUM_GPU_PER_WORKER', 1))
+RAY_NUM_GPU_PER_WORKER = float(os.environ.get("RAY_NUM_GPU_PER_WORKER", 1))
+
 
 @dataclass
 class MCTSConfig:
@@ -78,7 +79,7 @@ class MCTSProver:
         self.total_time = None
 
         self.config = mcts_config
-        
+
     def add_logger(self, logger_path: str):
         print("Logging to {}".format(logger_path))
         assert Path(logger_path).parent.exists()
@@ -254,10 +255,10 @@ class MCTSProver:
         else:
             assert isinstance(response, TacticState)
             result_node = InternalTreeNode(
-                state=response, 
-                critic_value=0.0, 
-                # critic_value=node.cum_logp + logprob, 
-                cum_logp=node.cum_logp + logprob
+                state=response,
+                critic_value=0.0,
+                # critic_value=node.cum_logp + logprob,
+                cum_logp=node.cum_logp + logprob,
             )
 
         edge = Edge(tactic=tactic, logp=logprob, src=node, dst=result_node)
@@ -357,7 +358,7 @@ class DistributedProver:
         num_sampled_tactics: int,
         generator_config: GeneratorConfig,
         mcts_config: MCTSConfig,
-        logger_path: Optional[str]=None,
+        logger_path: Optional[str] = None,
         debug: Optional[bool] = False,
     ) -> None:
         if model_path is None:

@@ -1,6 +1,13 @@
 from lean_dojo.container import Mount, NativeContainer, get_container
 from lean_dojo.data_extraction.trace import get_traced_repo_path
-from lean_dojo.interaction.dojo import CommandState, Dojo, DojoInitError, State, TacticState, Theorem
+from lean_dojo.interaction.dojo import (
+    CommandState,
+    Dojo,
+    DojoInitError,
+    State,
+    TacticState,
+    Theorem,
+)
 from prover.evaluate import _get_theorems
 from argparse import ArgumentParser
 from tqdm.contrib.concurrent import process_map
@@ -31,35 +38,31 @@ from lean_dojo.constants import (
 import pdb
 
 parser = ArgumentParser()
-parser.add_argument("--data-path", type=str, default="data/leandojo_benchmark_4/random/")
-parser.add_argument("--split", type=str, choices=["train", "val", "test"], default="test")
+parser.add_argument(
+    "--data-path", type=str, default="data/leandojo_benchmark_4/random/"
+)
+parser.add_argument(
+    "--split", type=str, choices=["train", "val", "test"], default="test"
+)
 # parser.add_argument("--num-build-workers", type=int, default=1)
 
 args = parser.parse_args()
 
-repo, thms, poss = _get_theorems(
-    args.data_path,
-    args.split,
-    None,
-    None,
-    None,
-    1
-)
+repo, thms, poss = _get_theorems(args.data_path, args.split, None, None, None, 1)
 
 dojo = Dojo(thms[0], 60)
-
 
 
 # Work in a temporary directory.
 dojo.origin_dir = Path.cwd()
 dojo.tmp_dir = Path(mkdtemp(dir=TMP_DIR))
 
-dojo.build_cache_dir = Path(CACHE_DIR/f"lean4_build_cache/{dojo.entry.repo.name}")
+dojo.build_cache_dir = Path(CACHE_DIR / f"lean4_build_cache/{dojo.entry.repo.name}")
 
 try:
     print("BUILDING {} ...".format(dojo.build_cache_dir))
     dojo._install_handlers()
-    
+
     # Copy and `cd` into the repo.
     traced_repo_path = get_traced_repo_path(dojo.repo)
 
@@ -114,7 +117,7 @@ try:
             # memory_limit = 1024 * int(TACTIC_MEMORY_LIMIT[:-1])
             # cmd = f"lake env lean --threads={TACTIC_CPU_LIMIT} --memory={memory_limit} {dojo.file_path}"
             # cpu_limit = memory_limit = None
-    
+
     print("FINISH_BUILDING")
     print(dojo.build_cache_dir / dojo.repo.name)
 
@@ -131,7 +134,9 @@ try:
     print(cmd)
 
 except Exception as ex:
-    import pdb; pdb.set_trace()
+    import pdb
+
+    pdb.set_trace()
     os.chdir(dojo.origin_dir)
     shutil.rmtree(dojo.tmp_dir)
     raise ex

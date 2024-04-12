@@ -8,16 +8,16 @@ from transformers import Trainer
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--pkl-path", type=str, required=True)
-    args = parser.parse_args()  
-    
+    args = parser.parse_args()
+
     x: List[SearchResult] = pkl.load(open(args.pkl_path, "rb"))
-    
+
     num_proved = num_failed = num_discarded = 0
     num_timeout = 0
-    
-    llm_time = 0.
-    env_time = 0.
-    
+
+    llm_time = 0.0
+    env_time = 0.0
+
     num_total_nodes = 0
     num_searched_nodes = 0
     cnt = 0
@@ -36,13 +36,12 @@ if __name__ == "__main__":
         env_time += r.environment_time
         num_total_nodes += r.num_total_nodes
         num_searched_nodes += r.num_searched_nodes
-    
-    
+
     print("Proved: {:.4%}({}/{})".format(num_proved / cnt, num_proved, cnt))
     print("#Failed:", num_failed)
     print("#Discarded:", num_discarded)
     print("#Timeout:", num_timeout)
-    print("avg LLM Time:", llm_time/cnt)
-    print("avg Env Time:", env_time/cnt)
-    print("avg Total Nodes:", num_total_nodes/cnt)
-    print("avg Searched Nodes:", num_searched_nodes/cnt)
+    print("avg LLM Time:", llm_time / cnt)
+    print("avg Env Time:", env_time / cnt)
+    print("avg Total Nodes:", num_total_nodes / cnt)
+    print("avg Searched Nodes:", num_searched_nodes / cnt)

@@ -19,6 +19,7 @@ from common import set_logger
 from mcts_prover.mcts import Status, DistributedProver, MCTSConfig
 from prover.evaluate import _get_theorems
 
+
 def evaluate(
     data_path: str,
     exp_id: Optional[str] = None,
@@ -165,11 +166,7 @@ def main() -> None:
         type=float,
         default=19652,
     )
-    parser.add_argument(
-        "--pb-c-init",
-        type=float,
-        default=1.25
-    )
+    parser.add_argument("--pb-c-init", type=float, default=1.25)
     parser.add_argument(
         "--num-sampled-tactics",
         type=int,

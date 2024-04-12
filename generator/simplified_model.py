@@ -1,4 +1,5 @@
 """Lightning module for the tactic generator."""
+
 import torch
 from generator.model import TacticGenerator, TopkAccuracy
 import pickle
@@ -21,16 +22,17 @@ from dataclasses import dataclass, asdict
 
 torch.set_float32_matmul_precision("medium")
 
+
 @dataclass
 class GeneratorConfig:
     num_beams: int
     max_inp_seq_len: int
     max_oup_seq_len: int
     length_penalty: float
-    
+
     def dict(self):
         return asdict(self)
-    
+
 
 class SimpleRetrievalAugmentedGenerator(TacticGenerator):
     def __init__(
@@ -41,7 +43,7 @@ class SimpleRetrievalAugmentedGenerator(TacticGenerator):
         max_oup_seq_len: int,
         length_penalty: float = 0.0,
         ret_ckpt_path: Optional[str] = None,
-        device="cpu"
+        device="cpu",
     ) -> None:
         super().__init__()
         self.num_beams = num_beams
@@ -58,14 +60,15 @@ class SimpleRetrievalAugmentedGenerator(TacticGenerator):
             raise NotImplementedError
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.generator = T5ForConditionalGeneration.from_pretrained(model_name).to(self.device)
+        self.generator = T5ForConditionalGeneration.from_pretrained(model_name).to(
+            self.device
+        )
 
         # self.topk_accuracies = dict()
         # for k in range(1, num_beams + 1):
         #     acc = TopkAccuracy(k)
         #     self.topk_accuracies[k] = acc
         #     self.add_module(f"top{k}_acc_val", acc)
-
 
     ##############
     # Prediction #
@@ -149,4 +152,3 @@ class SimpleRetrievalAugmentedGenerator(TacticGenerator):
             tactics_with_scores.append(list(zip_strict(output_text, output_score)))
 
         return tactics_with_scores
-
