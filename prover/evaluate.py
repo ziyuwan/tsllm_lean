@@ -11,6 +11,7 @@ from lean_dojo import Theorem
 from typing import List, Tuple, Optional
 from lean_dojo import LeanGitRepo, Theorem, Pos, is_available_in_cache
 from generator.simplified_model import GeneratorConfig
+from datetime import datetime
 
 from common import set_logger
 from prover.proof_search import Status, DistributedProver
@@ -125,7 +126,10 @@ def evaluate(
     verbose: bool = False,
 ) -> float:
     set_logger(verbose)
-    logger.add("bfs_{time}.log")
+    logger_path = Path(f"bfs_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log")
+    logger_path = logger_path.absolute().as_posix()
+    logger.add(logger_path, enqueue=True)
+
     repo, theorems, positions = _get_theorems(
         data_path, split, file_path, full_name, name_filter, num_theorems
     )
@@ -148,6 +152,7 @@ def evaluate(
         timeout=timeout,
         num_sampled_tactics=num_sampled_tactics,
         generator_config=generator_config,
+        logger_path=logger_path,
         debug=verbose,
     )
     results = prover.search_unordered(repo, theorems, positions)

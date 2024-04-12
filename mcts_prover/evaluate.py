@@ -1,7 +1,9 @@
 """Script for evaluating the prover on theorems extracted by LeanDojo.
 """
 
+from datetime import datetime
 import os
+from pathlib import Path
 import uuid
 import json
 import pickle
@@ -42,7 +44,9 @@ def evaluate(
     verbose: bool = False,
 ) -> float:
     set_logger(verbose)
-    logger.add("mcts_{time}.log")
+    logger_path = Path(f"mcts_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log")
+    logger_path = logger_path.absolute().as_posix()
+    logger.add(logger_path, enqueue=True)
 
     repo, theorems, positions = _get_theorems(
         data_path, split, file_path, full_name, name_filter, num_theorems

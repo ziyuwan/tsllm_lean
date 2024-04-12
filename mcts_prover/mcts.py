@@ -1,4 +1,5 @@
 import math
+from pathlib import Path
 import sys
 import time
 import numpy as np
@@ -77,6 +78,11 @@ class MCTSProver:
         self.total_time = None
 
         self.config = mcts_config
+        
+    def add_logger(self, logger_path: str):
+        print("Logging to {}".format(logger_path))
+        assert Path(logger_path).parent.exists()
+        logger.add(logger_path, enqueue=True, level="INFO")
 
     def search(
         self, repo: LeanGitRepo, thm: Theorem, pos: Pos
@@ -351,6 +357,7 @@ class DistributedProver:
         num_sampled_tactics: int,
         generator_config: GeneratorConfig,
         mcts_config: MCTSConfig,
+        logger_path: Optional[str]=None,
         debug: Optional[bool] = False,
     ) -> None:
         if model_path is None:
@@ -358,6 +365,7 @@ class DistributedProver:
         else:
             assert not tactic and not module
         self.distributed = num_cpus > 1
+        self._logger_path = logger_path
 
         if not self.distributed:
             if model_path is None:
@@ -408,6 +416,11 @@ class DistributedProver:
                 )
                 for _ in range(num_cpus)
             ]
+
+        # XXX(ziyu): make sure the logger path can be access on each node
+        if logger_path is not None:
+            for prover in provers:
+                prover.add_logger.remote(logger_path)
 
         self.prover_pool = ActorPool(provers)
 

@@ -14,10 +14,15 @@ from pytorch_lightning.utilities.deepspeed import (
     convert_zero_checkpoint_to_fp32_state_dict,
 )
 from transformers import get_cosine_schedule_with_warmup
-from deepspeed.ops.adam import FusedAdam, DeepSpeedCPUAdam
+
 from typing import Optional, List, Dict, Any, Tuple, Generator
 from pytorch_lightning.strategies.deepspeed import DeepSpeedStrategy
 
+try:
+    from deepspeed.ops.adam import FusedAdam, DeepSpeedCPUAdam
+except ModuleNotFoundError:
+    FusedAdam = None
+    DeepSpeedCPUAdam = None
 
 Example = Dict[str, Any]
 Batch = Dict[str, Any]

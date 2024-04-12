@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 from typing import List
 from prover.search_tree import Status
 from mcts_prover.mcts import SearchResult
+from transformers import Trainer
 
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -21,8 +22,6 @@ if __name__ == "__main__":
     num_searched_nodes = 0
     cnt = 0
     for r in x:
-        # print(r)
-        # import pdb; pdb.set_trace()
         if r is None:
             num_discarded += 1
             continue
@@ -39,11 +38,11 @@ if __name__ == "__main__":
         num_searched_nodes += r.num_searched_nodes
     
     
-    print("Proved:", num_proved)
-    print("Failed:", num_failed)
-    print("Discarded:", num_discarded)
-    print("Timeout:", num_timeout)
-    print("LLM Time:", llm_time/cnt)
-    print("Env Time:", env_time/cnt)
-    print("Total Nodes:", num_total_nodes/cnt)
-    print("Searched Nodes:", num_searched_nodes/cnt)
+    print("Proved: {:.4%}({}/{})".format(num_proved / cnt, num_proved, cnt))
+    print("#Failed:", num_failed)
+    print("#Discarded:", num_discarded)
+    print("#Timeout:", num_timeout)
+    print("avg LLM Time:", llm_time/cnt)
+    print("avg Env Time:", env_time/cnt)
+    print("avg Total Nodes:", num_total_nodes/cnt)
+    print("avg Searched Nodes:", num_searched_nodes/cnt)
