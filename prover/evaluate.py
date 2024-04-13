@@ -27,6 +27,8 @@ def _get_theorems(
     full_name: str,
     name_filter: str,
     num_theorems: int,
+    min_num_steps: Optional[int] = None,
+    max_num_steps: Optional[int] = None,
 ) -> Tuple[LeanGitRepo, List[Theorem], List[Pos]]:
     repo, theorems, positions = _get_theorems_from_files(
         data_path,
@@ -35,6 +37,8 @@ def _get_theorems(
         full_name,
         name_filter,
         num_theorems,
+        min_num_steps,
+        max_num_steps,
     )
 
     all_repos = {thm.repo for thm in theorems}
@@ -53,7 +57,10 @@ def _get_theorems_from_files(
     full_name: Optional[str],
     name_filter: Optional[str],
     num_theorems: Optional[int],
+    min_num_steps: Optional[int] = None,
+    max_num_steps: Optional[int] = None,
 ) -> Tuple[LeanGitRepo, List[Theorem], List[Pos]]:
+
     if not PURE_OFFLINE_MODE:
         data = json.load(open(os.path.join(data_path, f"{split}.json")))
         theorems = []
@@ -81,7 +88,6 @@ def _get_theorems_from_files(
         if num_theorems is not None:
             theorems = theorems[:num_theorems]
             positions = positions[:num_theorems]
-        logger.info(f"{len(theorems)} theorems loaded from {data_path}")
 
         metadata = json.load(open(os.path.join(data_path, "../metadata.json")))
         repo = LeanGitRepo(
@@ -112,7 +118,30 @@ def _get_theorems_from_files(
         for thm in theorems:
             _test_repo(thm.repo)
 
-    return repo, theorems, positions
+    if min_num_steps is not None or max_num_steps is not None:
+        logger.info(
+            "Filtering theorems by number of steps: min={}, max={}".format(
+                min_num_steps, max_num_steps
+            )
+        )
+
+        data = json.load(open(os.path.join(data_path, f"{split}.json")))
+        selected_theorems = []
+        selected_positions = []
+        for idx, t in enumerate(data):
+            if len(t["traced_tactics"]) < min_num_steps:
+                continue
+            if len(t["traced_tactics"]) > max_num_steps:
+                continue
+            assert theorems[idx].full_name == t["full_name"]
+            selected_theorems.append(theorems[idx])
+            selected_positions.append(positions[idx])
+    else:
+        selected_theorems = theorems
+        selected_positions = positions
+
+    logger.info(f"{len(selected_theorems)} theorems loaded from {data_path}")
+    return repo, selected_theorems, selected_positions
 
 
 def evaluate(

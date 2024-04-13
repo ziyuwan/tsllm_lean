@@ -28,6 +28,8 @@ def evaluate(
     full_name: Optional[str] = None,
     name_filter: Optional[str] = None,
     num_theorems: Optional[int] = None,
+    min_num_steps: Optional[int] = None,
+    max_num_steps: Optional[int] = None,
     ckpt_path: Optional[str] = None,
     indexed_corpus_path: Optional[str] = None,
     tactic: Optional[str] = None,
@@ -50,7 +52,14 @@ def evaluate(
     logger.add(logger_path, enqueue=True)
 
     repo, theorems, positions = _get_theorems(
-        data_path, split, file_path, full_name, name_filter, num_theorems
+        data_path,
+        split,
+        file_path,
+        full_name,
+        name_filter,
+        num_theorems,
+        min_num_steps,
+        max_num_steps,
     )
 
     generator_config = GeneratorConfig(
@@ -117,6 +126,7 @@ def main() -> None:
         required=True,
         help="Path to the data extracted by LeanDojo (e.g., data/leandojo_benchmark/random).",
     )
+
     parser.add_argument("--exp-id", type=str, help="Experiment ID used for logging.")
     parser.add_argument(
         "--split",
@@ -129,6 +139,19 @@ def main() -> None:
     parser.add_argument("--full-name", type=str)
     parser.add_argument("--name-filter", type=str)
     parser.add_argument("--num-theorems", type=int)
+
+    parser.add_argument(
+        "--min-num-steps",
+        type=int,
+        default=None,
+    )
+
+    parser.add_argument(
+        "--max-num-steps",
+        type=int,
+        default=None,
+    )
+
     parser.add_argument(
         "--ckpt_path",
         type=str,
@@ -203,6 +226,8 @@ def main() -> None:
         args.full_name,
         args.name_filter,
         args.num_theorems,
+        args.min_num_steps,
+        args.max_num_steps,
         args.ckpt_path,
         args.indexed_corpus_path,
         args.tactic,

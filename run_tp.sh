@@ -13,4 +13,5 @@ python mcts_prover/evaluate.py \
     --split test \
     --num-cpus 64 \
     --with-gpus \
-    | tee run_20240311.log
+    --min-num-steps 2 \
+    --max-num-steps 10
