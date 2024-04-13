@@ -218,9 +218,7 @@ def main() -> None:
     parser.add_argument(
         "--with-gpus", action="store_true", help="Use GPUs for proof search."
     )
-    parser.add_argument(
-        "--save-tree-dir", type=str, default=None
-    )
+    parser.add_argument("--save-tree-dir", type=str, default=None)
     parser.add_argument(
         "--verbose", action="store_true", help="Set the logging level to DEBUG."
     )
