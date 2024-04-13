@@ -1,6 +1,6 @@
 data/
 lightning_logs/
-*.pickle
+# *.pickle
 *.log
 
 # Byte-compiled / optimized / DLL files

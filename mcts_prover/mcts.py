@@ -42,6 +42,7 @@ from typing import Optional, List, Tuple, Iterable, Union
 from prover.proof_search import SearchResult
 from loguru import logger
 from ray.util.actor_pool import ActorPool
+import json
 
 import os
 
@@ -65,6 +66,7 @@ class MCTSProver:
         timeout: int,
         num_sampled_tactics: int,
         mcts_config: MCTSConfig,
+        save_tree_dir: Optional[str] = None,
         debug=bool,
     ):
 
@@ -79,11 +81,16 @@ class MCTSProver:
         self.total_time = None
 
         self.config = mcts_config
+        if save_tree_dir is not None:
+            self._save_tree_dir = Path(save_tree_dir)
+            assert self._save_tree_dir.exists()
+        else:
+            self._save_tree_dir = None
 
     def add_logger(self, logger_path: str):
         print("Logging to {}".format(logger_path))
         assert Path(logger_path).parent.exists()
-        logger.add(logger_path, enqueue=True, level="INFO")
+        logger.add(logger_path, enqueue=True)
 
     def search(
         self, repo: LeanGitRepo, thm: Theorem, pos: Pos
@@ -136,6 +143,12 @@ class MCTSProver:
             # tmp = _node_to_dict(self.root)
             # import json
             # json.dump(tmp, open("tmp.json", "w"))
+            if self._save_tree_dir is not None:
+                assert self.root.is_root
+                save_path = self._save_tree_dir / f"{thm.uhash}.json"
+                logger.info(f"Saving search tree to {save_path}")
+                tmp = _node_to_dict(self.root)
+                json.dump(tmp, open(save_path, "w"))
             return result
 
         except DojoInitError as ex:
@@ -280,6 +293,7 @@ class CpuProver(MCTSProver):
         num_sampled_tactics: int,
         generator_config: GeneratorConfig,
         mcts_config: MCTSConfig,
+        save_tree_dir: Optional[str],
         debug: bool,
     ) -> None:
         if model_path is None:
@@ -297,6 +311,7 @@ class CpuProver(MCTSProver):
             timeout,
             num_sampled_tactics,
             mcts_config,
+            save_tree_dir,
             debug,
         )
 
@@ -315,6 +330,7 @@ class GpuProver(MCTSProver):
         num_sampled_tactics: int,
         generator_config: GeneratorConfig,
         mcts_config: MCTSConfig,
+        save_tree_dir: Optional[str],
         debug: bool,
     ) -> None:
         if model_path is None:
@@ -335,6 +351,7 @@ class GpuProver(MCTSProver):
             timeout,
             num_sampled_tactics,
             mcts_config,
+            save_tree_dir,
             debug,
         )
 
@@ -359,6 +376,7 @@ class DistributedProver:
         generator_config: GeneratorConfig,
         mcts_config: MCTSConfig,
         logger_path: Optional[str] = None,
+        save_tree_dir: Optional[str] = None,
         debug: Optional[bool] = False,
     ) -> None:
         if model_path is None:
@@ -380,7 +398,7 @@ class DistributedProver:
                     assert indexed_corpus_path is not None
                     tac_gen.retriever.load_corpus(indexed_corpus_path)
             self.prover = MCTSProver(
-                tac_gen, timeout, num_sampled_tactics, mcts_config, debug
+                tac_gen, timeout, num_sampled_tactics, mcts_config, save_tree_dir, debug
             )
             return
 
@@ -397,6 +415,7 @@ class DistributedProver:
                     num_sampled_tactics=num_sampled_tactics,
                     generator_config=generator_config,
                     mcts_config=mcts_config,
+                    save_tree_dir=save_tree_dir,
                     debug=debug,
                 )
                 for _ in range(num_cpus)
@@ -413,6 +432,7 @@ class DistributedProver:
                     num_sampled_tactics=num_sampled_tactics,
                     generator_config=generator_config,
                     mcts_config=mcts_config,
+                    save_tree_dir=save_tree_dir,
                     debug=debug,
                 )
                 for _ in range(num_cpus)

@@ -44,12 +44,13 @@ def evaluate(
     timeout: int = 600,
     num_cpus: int = 1,
     with_gpus: bool = False,
+    save_tree_dir: Optional[str] = None,
     verbose: bool = False,
 ) -> float:
     set_logger(verbose)
     logger_path = Path(f"mcts_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log")
     logger_path = logger_path.absolute().as_posix()
-    logger.add(logger_path, enqueue=True)
+    logger.add(logger_path, enqueue=True, level="INFO")
 
     repo, theorems, positions = _get_theorems(
         data_path,
@@ -72,6 +73,13 @@ def evaluate(
 
     mcts_config = MCTSConfig(pb_c_init=pb_c_init, pb_c_base=pb_c_base)
 
+    if save_tree_dir is not None:
+        save_tree_dir = Path(save_tree_dir)
+        if not save_tree_dir.exists():
+            save_tree_dir.mkdir(parents=True)
+        save_tree_dir = save_tree_dir.absolute().as_posix()
+        logger.info(f"Saving search trees to {save_tree_dir}")
+
     prover = DistributedProver(
         ckpt_path,
         indexed_corpus_path,
@@ -83,6 +91,8 @@ def evaluate(
         num_sampled_tactics=num_sampled_tactics,
         generator_config=generator_config,
         mcts_config=mcts_config,
+        logger_path=logger_path,
+        save_tree_dir=save_tree_dir,
         debug=verbose,
     )
     results = prover.search_unordered(repo, theorems, positions)
@@ -209,6 +219,9 @@ def main() -> None:
         "--with-gpus", action="store_true", help="Use GPUs for proof search."
     )
     parser.add_argument(
+        "--save-tree-dir", type=str, default=None
+    )
+    parser.add_argument(
         "--verbose", action="store_true", help="Set the logging level to DEBUG."
     )
     args = parser.parse_args()
@@ -242,6 +255,7 @@ def main() -> None:
         args.timeout,
         args.num_cpus,
         args.with_gpus,
+        args.save_tree_dir,
         args.verbose,
     )
 
