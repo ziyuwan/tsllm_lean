@@ -90,7 +90,7 @@ class MCTSProver:
     def add_logger(self, logger_path: str):
         print("Logging to {}".format(logger_path))
         assert Path(logger_path).parent.exists()
-        logger.add(logger_path, enqueue=True)
+        logger.add(logger_path, enqueue=True, level="INFO")
 
     def search(
         self, repo: LeanGitRepo, thm: Theorem, pos: Pos
