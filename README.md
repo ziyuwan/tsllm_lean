@@ -59,6 +59,8 @@ Then in the `run_tp.sh` script, add new arguments for
 
 Then running the mcts search script.
 
+**When running with the same `--save-tree-dir`, the program will resume from it by skip the questions that have already been searched and saved.**
+
 ## important env variables
 ```
 export TMP_DIR= {where to create tmp files}

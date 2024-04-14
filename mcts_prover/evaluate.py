@@ -77,6 +77,9 @@ def evaluate(
         save_tree_dir = Path(save_tree_dir)
         if not save_tree_dir.exists():
             save_tree_dir.mkdir(parents=True)
+            logger.info(f"Creating save_tree_dir at {save_tree_dir}")
+        else:
+            logger.info(f"Resuming from {save_tree_dir}")
         save_tree_dir = save_tree_dir.absolute().as_posix()
         logger.info(f"Saving search trees to {save_tree_dir}")
 

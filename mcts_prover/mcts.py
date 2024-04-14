@@ -95,6 +95,19 @@ class MCTSProver:
     def search(
         self, repo: LeanGitRepo, thm: Theorem, pos: Pos
     ) -> Optional[SearchResult]:
+
+        if self._save_tree_dir is not None:
+            save_path = self._save_tree_dir / f"{thm.uhash}.json"
+            if save_path.exists():
+                logger.info(f"Search tree already exists. Loading results from {save_path}")
+                with open(save_path, "r") as f:
+                    result_ckpt = json.load(f)
+                    result = SearchResult(
+                        theorem=thm
+                        **result_ckpt["result"])
+                    return result
+
+    
         logger.info(f"Proving {thm}")
 
         self.repo = repo
@@ -140,15 +153,23 @@ class MCTSProver:
                 num_searched_nodes=self.num_expansions,
             )
             logger.info(result)
-            # tmp = _node_to_dict(self.root)
-            # import json
-            # json.dump(tmp, open("tmp.json", "w"))
             if self._save_tree_dir is not None:
                 assert self.root.is_root
                 save_path = self._save_tree_dir / f"{thm.uhash}.json"
                 logger.info(f"Saving search tree to {save_path}")
-                tmp = _node_to_dict(self.root)
-                json.dump(tmp, open(save_path, "w"))
+                search_tree = _node_to_dict(self.root)
+                res_json = {
+                    "status": str(result.status),
+                    "proof": result.proof,
+                    "actor_time": result.actor_time,
+                    "environment_time": result.environment_time,
+                    "total_time": result.total_time,
+                    "num_total_nodes": result.num_total_nodes,
+                    "num_searched_nodes": result.num_searched_nodes,
+                }
+                json2save = {"search_tree": search_tree, "result": res_json}
+                json.dump(json2save, open(save_path, "w"))
+
             return result
 
         except DojoInitError as ex:
