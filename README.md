@@ -46,6 +46,19 @@ sh run_tp.sh
 sh run_tp_bfs.sh
 ```
 
+## Data Sampling
+We support tree-structured data storage for MCTS search.
+To sample data from training set. First copy the cached_repo.pickle file
+```
+cp repos_to_cp/random/cached_repo_train.pickle data/leandojo_benchmark_4/random
+```
+
+Then in the `run_tp.sh` script, add new arguments for
+- Tree data dir: `--save-tree-dir`, this should be a path **every worker** can access
+- theorem filtering by number of steps: `--min-num-steps` and `--max-num-steps`, for example `--min-num-steps 2 --max-num-steps 10`, which will get 27k problem from the original 97k training set.
+
+Then running the mcts search script.
+
 ## important env variables
 ```
 export TMP_DIR= {where to create tmp files}
