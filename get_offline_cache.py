@@ -13,7 +13,12 @@ parser.add_argument("--num-build-workers", type=int, default=1)
 args = parser.parse_args()
 
 repo, thms, poss = _get_theorems(
-    args.data_path, args.split, None, None, None, None,
+    args.data_path,
+    args.split,
+    None,
+    None,
+    None,
+    None,
 )
 
 
