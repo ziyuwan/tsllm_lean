@@ -48,10 +48,16 @@ sh run_tp_bfs.sh
 
 ## Data Sampling
 We support tree-structured data storage for MCTS search.
-To sample data from training set. First copy the cached_repo.pickle file
+To sample data from training set. First generate the cached_repo.pickle file
 ```
-cp repos_to_cp/random/cached_repo_train.pickle data/leandojo_benchmark_4/random
+
+# export CACHE_DIR={your cache dir}
+# export TMP_DIR={your tmp dir}
+
+PURE_OFFLINE_MODE=0 python get_offline_cache.py --data-path {the data path} --split train
+
 ```
+
 
 Then in the `run_tp.sh` script, add new arguments for
 - Tree data dir: `--save-tree-dir`, this should be a path **every worker** can access

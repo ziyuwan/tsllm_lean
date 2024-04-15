@@ -12,7 +12,9 @@ parser.add_argument("--num-build-workers", type=int, default=1)
 
 args = parser.parse_args()
 
-repo, thms, poss = _get_theorems(args.data_path, args.split, None, None, None, None)
+repo, thms, poss = _get_theorems(
+    args.data_path, args.split, None, None, None, None,
+)
 
 
 def run_build_dojo(thm):
@@ -20,4 +22,4 @@ def run_build_dojo(thm):
         pass
 
 
-process_map(run_build_dojo, thms, max_workers=args.num_build_workers, chunksize=1)
+# process_map(run_build_dojo, thms, max_workers=args.num_build_workers, chunksize=1)
