@@ -99,15 +99,14 @@ class MCTSProver:
         if self._save_tree_dir is not None:
             save_path = self._save_tree_dir / f"{thm.uid}.json"
             if save_path.exists():
-                logger.info(f"Search tree already exists. Loading results from {save_path}")
+                logger.info(
+                    f"Search tree already exists. Loading results from {save_path}"
+                )
                 with open(save_path, "r") as f:
                     result_ckpt = json.load(f)
-                    result = SearchResult(
-                        theorem=thm
-                        **result_ckpt["result"])
+                    result = SearchResult(theorem=thm, **result_ckpt["result"])
                     return result
 
-    
         logger.info(f"Proving {thm}")
 
         self.repo = repo
