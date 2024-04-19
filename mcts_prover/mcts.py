@@ -97,7 +97,12 @@ class MCTSProver:
     ) -> Optional[SearchResult]:
 
         if self._save_tree_dir is not None:
-            save_path = self._save_tree_dir / f"{thm.uid}.json"
+            save_path0 = self._save_tree_dir / f"{thm.uid}.json"
+            save_path1 = self._save_tree_dir / f"{thm.uid1}.json"
+
+            if save_path0.exists() or save_path1.exists():
+                save_path = save_path0 if save_path0.exists() else save_path1
+            
             if save_path.exists():
                 logger.info(
                     f"Search tree already exists. Loading results from {save_path}"
@@ -154,7 +159,8 @@ class MCTSProver:
             logger.info(result)
             if self._save_tree_dir is not None:
                 assert self.root.is_root
-                save_path = self._save_tree_dir / f"{thm.uid}.json"
+                # save_path = self._save_tree_dir / f"{thm.uid}.json"
+                save_path = self._save_tree_dir / f"{thm.uid1}.json"
                 logger.info(f"Saving search tree to {save_path}")
                 search_tree = _node_to_dict(self.root)
                 res_json = {
