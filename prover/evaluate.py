@@ -67,14 +67,6 @@ def _get_theorems_from_files(
         positions = []
 
         for t in data:
-            if file_path is not None and t["file_path"] != file_path:
-                continue
-            if full_name is not None and t["full_name"] != full_name:
-                continue
-            if name_filter is not None and not hashlib.md5(
-                t["full_name"].encode()
-            ).hexdigest().startswith(name_filter):
-                continue
             repo = LeanGitRepo(t["url"], t["commit"])
             theorems.append(Theorem(repo, t["file_path"], t["full_name"]))
             positions.append(Pos(*t["start"]))
@@ -85,10 +77,6 @@ def _get_theorems_from_files(
         #         (str(t.file_path) + ":" + t.full_name).encode()
         #     ).hexdigest(),
         # )
-        if num_theorems is not None:
-            theorems = theorems[:num_theorems]
-            positions = positions[:num_theorems]
-
         metadata = json.load(open(os.path.join(data_path, "../metadata.json")))
         repo = LeanGitRepo(
             metadata["from_repo"]["url"], metadata["from_repo"]["commit"]
@@ -125,20 +113,30 @@ def _get_theorems_from_files(
             )
         )
 
-        data = json.load(open(os.path.join(data_path, f"{split}.json")))
-        selected_theorems = []
-        selected_positions = []
-        for idx, t in enumerate(data):
-            if len(t["traced_tactics"]) < min_num_steps:
-                continue
-            if len(t["traced_tactics"]) > max_num_steps:
-                continue
-            assert theorems[idx].full_name == t["full_name"]
-            selected_theorems.append(theorems[idx])
-            selected_positions.append(positions[idx])
-    else:
-        selected_theorems = theorems
-        selected_positions = positions
+    data = json.load(open(os.path.join(data_path, f"{split}.json")))
+    selected_theorems = []
+    selected_positions = []
+    for idx, t in enumerate(data):
+        if file_path is not None and t["file_path"] != file_path:
+            continue
+        if full_name is not None and t["full_name"] != full_name:
+            continue
+        if name_filter is not None and not hashlib.md5(
+            t["full_name"].encode()
+        ).hexdigest().startswith(name_filter):
+            continue
+        if min_num_steps is not None and len(t["traced_tactics"]) < min_num_steps:
+            continue
+        if max_num_steps is not None and len(t["traced_tactics"]) > max_num_steps:
+            continue
+        assert theorems[idx].full_name == t["full_name"]
+        selected_theorems.append(theorems[idx])
+        selected_positions.append(positions[idx])
+
+    if num_theorems is not None:
+        selected_theorems = selected_theorems[:num_theorems]
+        selected_positions = selected_positions[:num_theorems]
+
 
     logger.info(f"{len(selected_theorems)} theorems loaded from {data_path}")
     return repo, selected_theorems, selected_positions
