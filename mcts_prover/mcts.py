@@ -100,10 +100,26 @@ class MCTSProver:
             save_path0 = self._save_tree_dir / f"{thm.uid}.json"
             save_path1 = self._save_tree_dir / f"{thm.uid1}.json"
 
-            if save_path0.exists() or save_path1.exists():
-                save_path = save_path0 if save_path0.exists() else save_path1
-            
-            if save_path.exists():
+            save_path = None
+            try:
+                if save_path0.exists():
+                    save_path = save_path0
+            except OSError as e:
+                logger.warning(f"OSError in save_path0.exists() for {save_path0}")
+
+            if save_path is None:
+                try:
+                    if save_path1.exists():
+                        save_path = save_path1
+                except OSError as e:
+                    logger.warning(f"OSError in save_path0.exists() for {save_path1}")
+                    if save_path is None:
+                        logger.warning(
+                            f"Can not store the simplified file {save_path1}, give up proving {thm}"
+                        )
+                        return None
+
+            if save_path is not None:
                 logger.info(
                     f"Search tree already exists. Loading results from {save_path}"
                 )
