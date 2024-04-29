@@ -112,7 +112,7 @@ class MCTSProver:
                     if save_path1.exists():
                         save_path = save_path1
                 except OSError as e:
-                    logger.warning(f"OSError in save_path0.exists() for {save_path1}")
+                    logger.warning(f"OSError in save_path1.exists() for {save_path1}")
                     if save_path is None:
                         logger.warning(
                             f"Can not store the simplified file {save_path1}, give up proving {thm}"

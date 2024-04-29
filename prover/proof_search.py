@@ -30,7 +30,7 @@ from ray.util.actor_pool import ActorPool
 from common import zip_strict
 from prover.search_tree import *
 from generator.model import FixedTacticGenerator
-from generator.simplified_model import (
+from causal_generator.simplified_model import (
     SimpleRetrievalAugmentedGenerator,
     GeneratorConfig,
 )
@@ -449,6 +449,7 @@ class DistributedProver:
                     module,
                     timeout=timeout,
                     num_sampled_tactics=num_sampled_tactics,
+                    generator_config=generator_config,
                     debug=debug,
                 )
                 for _ in range(num_cpus)
