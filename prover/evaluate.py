@@ -11,7 +11,7 @@ from loguru import logger
 from lean_dojo import Theorem
 from typing import List, Tuple, Optional
 from lean_dojo import LeanGitRepo, Theorem, Pos, is_available_in_cache
-from generator.simplified_model import GeneratorConfig
+from causal_generator.simplified_model import GeneratorConfig
 from datetime import datetime
 
 from common import set_logger
@@ -136,6 +136,7 @@ def _get_theorems_from_files(
     if num_theorems is not None:
         selected_theorems = selected_theorems[:num_theorems]
         selected_positions = selected_positions[:num_theorems]
+
 
     logger.info(f"{len(selected_theorems)} theorems loaded from {data_path}")
     return repo, selected_theorems, selected_positions
