@@ -23,6 +23,8 @@ from common import (
 )
 
 IGNORE_INDEX = -100
+PROMPT_FORMAT_STR = "{state}\n{tactic}{eos}"
+QUERY_FORMAT_STR = "{state}\n"
 
 
 class GeneratorDataset(Dataset):
@@ -64,10 +66,11 @@ class GeneratorDataset(Dataset):
                 if (
                     len(
                         self.tokenizer.encode(
-                            format_state(tac["state_before"])
-                            + "\n"
-                            + tactic
-                            + self.tokenizer.eos_token
+                            PROMPT_FORMAT_STR.format(
+                                state=format_state(tac["state_before"]),
+                                tactic=tactic,
+                                eos=self.tokenizer.eos_token
+                            )
                         )
                     )
                     > self.max_seq_len
@@ -106,10 +109,10 @@ class GeneratorDataset(Dataset):
         if not self.keep_marks:
             ex["state"] = remove_marks(ex["state"])
 
-        query_ids = self.tokenizer.encode(ex["state"] + "\n", add_special_tokens=True)
+        query_ids = self.tokenizer.encode(QUERY_FORMAT_STR.format(state=ex["state"]), add_special_tokens=True)
         len_q = len(query_ids)
         input_ids = self.tokenizer.encode(
-            ex["state"] + "\n" + ex["tactic"] + self.tokenizer.eos_token,
+            PROMPT_FORMAT_STR.format(state=ex["state"], tactic=ex["tactic"], eos=self.tokenizer.eos_token),
             add_special_tokens=True,
         )
         input_ids = torch.tensor(input_ids, dtype=torch.long)
