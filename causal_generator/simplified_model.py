@@ -21,21 +21,46 @@ from functools import partial
 
 from vllm import SamplingParams
 
-torch.set_float32_matmul_precision("medium")
+# torch.set_float32_matmul_precision("medium")
 
-def vllm_api_call(
-    query_str: str,
-    worker_address="http://0.0.0.0:8000",
-    **sampling_params,
+
+def _generate_fastchat(
+    query_str,
+    model_name,
+    n,
+    temperature,
+    top_p=1.0,
+    top_k=-1,
+    max_new_tokens=256,
+    stop_token_ids=None,
+    stop_str=None,
+    controller_addr="http://localhost:21801",
 ):
+    # ret = requests.post(controller_addr + "/refresh_all_workers")
+    # ret = requests.post(controller_addr + "/list_models")
+    # models = ret.json()["models"]
+    # models.sort()
+
+    ret = requests.post(
+        controller_addr + "/get_worker_address", json={"model": model_name}
+    )
+    worker_addr = ret.json()["address"]
+
+    headers = {"User-Agent": "FastChat Client"}
     gen_params = {
+        "model": model_name,
         "prompt": query_str,
-        "stream": False,
-        **sampling_params
+        "temperature": temperature,
+        "n": n,
+        "top_p": top_p,
+        "top_k": top_k,
+        "stop_token_ids": stop_token_ids,
+        "max_new_tokens": max_new_tokens,
+        "stop": stop_str,
+        "echo": False,
     }
-    headers = {"User-Agent": "LeanDojo Prover Client"}
     response = requests.post(
-        worker_address + "/generate",
+        worker_addr + "/worker_generate",
         headers=headers,
         json=gen_params,
         stream=True,
@@ -57,6 +82,7 @@ class GeneratorConfig:
     def dict(self):
         return asdict(self)
 
+
 class SimpleRetrievalAugmentedGenerator(TacticGenerator):
     def __init__(
         self,
@@ -69,6 +95,7 @@ class SimpleRetrievalAugmentedGenerator(TacticGenerator):
         device="cpu",
     ) -> None:
         super().__init__()
+        self.model_name = model_name
         self.num_beams = num_beams
         self.length_penalty = length_penalty
         self.max_inp_seq_len = max_inp_seq_len
@@ -85,10 +112,11 @@ class SimpleRetrievalAugmentedGenerator(TacticGenerator):
         assert num_beams == 1
 
         self.llm_gen_fn = partial(
-            vllm_api_call, 
+            _generate_fastchat,
+            model_name=self.model_name,
             temperature=1.0,
             top_k=100,
-            max_tokens=max_oup_seq_len,
+            max_new_tokens=max_oup_seq_len,
         )
 
     ##############
@@ -103,24 +131,29 @@ class SimpleRetrievalAugmentedGenerator(TacticGenerator):
         theorem_pos: Pos,
         num_samples: int,
     ) -> List[Tuple[str, float]]:
-        raw_output_text, raw_scores = self.llm_gen_fn(state+"\n", n=num_samples)
+        raw_output_text, raw_scores = self.llm_gen_fn(state + "\n", n=num_samples)
         output_text = []
         output_score = []
         for j in range(len(raw_output_text)):
-                t = remove_marks(raw_output_text[j])
-                if len(t) > 0 and t not in output_text:
-                    output_text.append(t)
-                    output_score.append(raw_scores[j])
-        
+            t = remove_marks(raw_output_text[j])
+            if len(t) > 0 and t not in output_text:
+                output_text.append(t)
+                output_score.append(raw_scores[j])
+
         return list(zip_strict(output_text, output_score))
-    
-    def batch_generate(self, state: List[str], file_path: List[str], theorem_full_name: List[str], theorem_pos: List[Pos], num_samples: int) -> List[List[Tuple[str | float]]]:
+
+    def batch_generate(
+        self,
+        state: List[str],
+        file_path: List[str],
+        theorem_full_name: List[str],
+        theorem_pos: List[Pos],
+        num_samples: int,
+    ) -> List[List[Tuple[str | float]]]:
         raise NotImplementedError
 
 
 if __name__ == "__main__":
-    gen = SimpleRetrievalAugmentedGenerator(
-        None, 1, 1024, 64
-    ) 
+    gen = SimpleRetrievalAugmentedGenerator(None, 1, 1024, 64)
 
     print(gen.generate("Who are you?\n", None, None, None, 1))

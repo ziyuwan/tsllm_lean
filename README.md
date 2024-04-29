@@ -46,6 +46,46 @@ sh run_tp.sh
 sh run_tp_bfs.sh
 ```
 
+## Run Casual Generator Branch
+### SFT
+modify hparams in the following scripts like model-path and etc..
+```
+export PYTHONPATH=$(pwd)
+sh train_deepseek_math_7b.sh
+```
+
+### install my FastChat-tsllm
+```
+git clone git@github.com:ziyuwan/FastChat_tsllm.git
+cd FastChat_tsllm
+pip install -e .
+```
+### Deploy vLLM model
+```
+pip install vllm # version:0.4.1
+```
+**After that, make sure your tansformer version is not changed**. My version: 4.38
+
+**After that, make sure your `pydantic` version is not changed**. My version: 2.0
+
+In `create_fastchat_multi_vllm_worker.sh`, modify hyperparams like `CONTROLER_PORT`, `WORKER_BASE_PORT`.
+**Causion: If you change controller_port, you should also change it in `causal_generator/simplified_model.py:36`**
+
+`MODEL_PATH` is your LLM model.
+`N_GPUS` and `START_GPU_ID` are number and start position of GPUs to use.
+```
+sh create_fastchat_multi_vllm_worker.sh
+```
+
+`tmux a -t FastChat` you will see your **model_name**, which is parsed by:
+`model_path.split("/")[-1]`
+
+### Run BFS
+checkout to the branch `causal-model`
+
+In `run_tp_bfs.sh`, modify `--ckpt_path` to the above **model_name**
+Under `Reprover/` run `export PYTHONPATH=$(pwd)` and then run the scripts `run_tp_bfs.sh`, do not use `--with-gpus` which will limited the number of workers by number of GPUs.
+
 ## Data Sampling
 We support tree-structured data storage for MCTS search.
 To sample data from training set. First generate the cached_repo.pickle file

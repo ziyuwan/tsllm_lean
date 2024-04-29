@@ -137,7 +137,6 @@ def _get_theorems_from_files(
         selected_theorems = selected_theorems[:num_theorems]
         selected_positions = selected_positions[:num_theorems]
 
-
     logger.info(f"{len(selected_theorems)} theorems loaded from {data_path}")
     return repo, selected_theorems, selected_positions
 
