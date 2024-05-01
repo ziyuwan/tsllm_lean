@@ -54,7 +54,9 @@ class GeneratorDataset(Dataset):
 
     def _load_data(self, data_path: str, normalize_tactics: bool) -> List[Example]:
         data = []
-        for thm in tqdm(json.load(open(data_path))):
+        prompts_to_tokenize = []
+        info_list = []
+        for thm in json.load(open(data_path)):
             for tac in thm["traced_tactics"]:
                 if "annotated_tactic" in tac:
                     tactic = format_tactic(*tac["annotated_tactic"], normalize_tactics)
@@ -62,27 +64,26 @@ class GeneratorDataset(Dataset):
                     tactic = format_tactic(tac["tactic"], [], normalize_tactics)
                 if not self.keep_marks:
                     tactic = remove_marks(tactic)
-                # FIXME(ziyu): very slow !
-                if (
-                    len(
-                        self.tokenizer.encode(
-                            PROMPT_FORMAT_STR.format(
-                                state=format_state(tac["state_before"]),
-                                tactic=tactic,
-                                eos=self.tokenizer.eos_token
-                            )
-                        )
-                    )
-                    > self.max_seq_len
-                ):
-                    continue
+                state = format_state(tac["state_before"])
+                prompt = PROMPT_FORMAT_STR.format(
+                    state=state, tactic=tactic, eos=self.tokenizer.eos_token
+                )
+                prompts_to_tokenize.append(prompt)
+                info_list.append((thm, tac, state, tactic))
+
+        # https://huggingface.co/docs/transformers/v4.40.1/en/internal/tokenization_utils#transformers.PreTrainedTokenizerBase.batch_encode_plus
+        token_lengths = self.tokenizer.batch_encode_plus(
+            prompts_to_tokenize, return_length=True
+        )["length"]
+        for (thm, tac, state, tactic), tok_len in zip(info_list, token_lengths):
+            if tok_len <= self.max_seq_len:
                 data.append(
                     {
                         "url": thm["url"],
                         "commit": thm["commit"],
                         "file_path": thm["file_path"],
                         "full_name": thm["full_name"],
-                        "state": format_state(tac["state_before"]),
+                        "state": state,
                         "tactic": tactic,
                     }
                 )
@@ -109,10 +110,14 @@ class GeneratorDataset(Dataset):
         if not self.keep_marks:
             ex["state"] = remove_marks(ex["state"])
 
-        query_ids = self.tokenizer.encode(QUERY_FORMAT_STR.format(state=ex["state"]), add_special_tokens=True)
+        query_ids = self.tokenizer.encode(
+            QUERY_FORMAT_STR.format(state=ex["state"]), add_special_tokens=True
+        )
         len_q = len(query_ids)
         input_ids = self.tokenizer.encode(
-            PROMPT_FORMAT_STR.format(state=ex["state"], tactic=ex["tactic"], eos=self.tokenizer.eos_token),
+            PROMPT_FORMAT_STR.format(
+                state=ex["state"], tactic=ex["tactic"], eos=self.tokenizer.eos_token
+            ),
             add_special_tokens=True,
         )
         input_ids = torch.tensor(input_ids, dtype=torch.long)
