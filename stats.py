@@ -2,7 +2,7 @@ import pickle as pkl
 from argparse import ArgumentParser
 from typing import List
 from prover.search_tree import Status
-from mcts_prover.mcts import SearchResult
+from mcts_prover.mcts_search import SearchResult
 from transformers import Trainer
 
 if __name__ == "__main__":

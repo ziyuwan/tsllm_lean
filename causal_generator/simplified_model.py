@@ -18,8 +18,9 @@ from common import (
 from retrieval.model import PremiseRetriever
 from dataclasses import dataclass, asdict
 from functools import partial
+from generator.simplified_model import GeneratorConfig
 
-from vllm import SamplingParams
+# from vllm import SamplingParams
 
 # torch.set_float32_matmul_precision("medium")
 
@@ -72,15 +73,6 @@ def _generate_fastchat(
     return results["text"], cum_logps
 
 
-@dataclass
-class GeneratorConfig:
-    num_beams: int
-    max_inp_seq_len: int
-    max_oup_seq_len: int
-    length_penalty: float
-
-    def dict(self):
-        return asdict(self)
 
 
 class SimpleRetrievalAugmentedGenerator(TacticGenerator):
