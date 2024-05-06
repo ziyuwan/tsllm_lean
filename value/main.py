@@ -52,7 +52,7 @@ from pathlib import Path
 
 TRL_USE_RICH = os.environ.get("TRL_USE_RICH", False)
 
-from trl.commands.cli_utils import init_zero_verbose, SftScriptArguments, TrlParser
+from trl.commands.cli_utils import init_zero_verbose, TrlParser
 
 if TRL_USE_RICH:
     init_zero_verbose()
@@ -76,12 +76,8 @@ from trl import (
     get_kbit_device_map,
 )
 
-from causal_generator.datamodule import (
-    IGNORE_INDEX,
-    DataCollatorForSupervisedDataset,
-    GeneratorDataset,
-)
-
+from value.datamodule import ValueDataset, DataCollatorForValueDataset
+from dataclasses import dataclass, field
 from model.vhead_casual import ValueHeadedLLM
 
 
@@ -93,8 +89,25 @@ if TRL_USE_RICH:
     )
 
 
+@dataclass
+class ValueDataArguments:
+    dataset_name: str = field(
+        default="timdettmers/openassistant-guanaco",
+        metadata={"help": "the dataset name"},
+    )
+    max_seq_length: int = field(
+        default=512, metadata={"help": "The maximum sequence length for SFT Trainer"}
+    )
+    use_neutral: bool = field(
+        default=False, metadata={"help": "Use neutral examples for training"}
+    )
+    neutral_as_negative: bool = field(
+        default=True, metadata={"help": "Use neutral examples as negative examples"}
+    )
+
+
 if __name__ == "__main__":
-    parser = TrlParser((SftScriptArguments, TrainingArguments, ModelConfig))
+    parser = TrlParser((ValueDataArguments, TrainingArguments, ModelConfig))
     # parser.add_argument("--dataset_path", type=str, default="data/leandojo_benchmark_4/random")
     args, training_args, model_config = parser.parse_args_and_config()
 
@@ -138,32 +151,15 @@ if __name__ == "__main__":
     # train_dataset = raw_datasets[args.dataset_train_split]
     # eval_dataset = raw_datasets[args.dataset_test_split]
 
-    train_dataset = GeneratorDataset(
+    train_dataset = ValueDataset(
         data_path=Path(args.dataset_name) / "train.json",
-        corpus=None,
-        keep_marks=True,
-        preds=None,
-        p_drop=0.5,
-        normalize_tactics=True,
         max_seq_len=args.max_seq_length,
+        use_neutral=args.use_neutral,
+        neutral_as_negative=args.neutral_as_negative,
         tokenizer=tokenizer,
-        ignore_index=IGNORE_INDEX,
-        is_train=True,
     )
 
-    eval_dataset = GeneratorDataset(
-        data_path=Path(args.dataset_name) / "val.json",
-        corpus=None,
-        keep_marks=True,
-        preds=None,
-        p_drop=0.5,
-        normalize_tactics=True,
-        max_seq_len=args.max_seq_length,
-        tokenizer=tokenizer,
-        ignore_index=IGNORE_INDEX,
-        is_train=False,
-    )
-    collator_fn = DataCollatorForSupervisedDataset(tokenizer)
+    collator_fn = DataCollatorForValueDataset(tokenizer)
 
     ################
     # Optional rich context managers
@@ -193,7 +189,6 @@ if __name__ == "__main__":
             model=model,
             args=training_args,
             train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
             data_collator=collator_fn,
             tokenizer=tokenizer,
             # peft_config=get_peft_config(model_config),
