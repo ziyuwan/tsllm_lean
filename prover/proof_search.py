@@ -30,6 +30,9 @@ from ray.util.actor_pool import ActorPool
 from common import zip_strict
 from prover.search_tree import *
 from generator.model import FixedTacticGenerator
+from causal_generator.simplified_model import (
+    SimpleRetrievalAugmentedGenerator as CausalGenerator,
+)
 from generator.simplified_model import (
     SimpleRetrievalAugmentedGenerator,
     GeneratorConfig,
@@ -317,6 +320,7 @@ class CpuProver(BestFirstSearchProver):
     def __init__(
         self,
         model_path: Optional[str],
+        seq2seq: bool,
         indexed_corpus_path: Optional[str],
         tactic: Optional[str],
         module: Optional[str],
@@ -328,9 +332,14 @@ class CpuProver(BestFirstSearchProver):
         if model_path is None:
             tac_gen = FixedTacticGenerator(tactic, module)
         else:
-            tac_gen = SimpleRetrievalAugmentedGenerator(
-                model_path, device=torch.device("cpu"), **generator_config.dict()
-            )
+            if seq2seq:
+                tac_gen = SimpleRetrievalAugmentedGenerator(
+                    model_path, device=torch.device("cpu"), **generator_config.dict()
+                )
+            else:
+                tac_gen = CausalGenerator(
+                    model_path, device=torch.device("cpu"), **generator_config.dict()
+                )
             if tac_gen.retriever is not None:
                 if indexed_corpus_path is not None:
                     tac_gen.retriever.load_corpus(indexed_corpus_path)
@@ -350,6 +359,7 @@ class GpuProver(BestFirstSearchProver):
     def __init__(
         self,
         model_path: Optional[str],
+        seq2seq: bool,
         indexed_corpus_path: Optional[str],
         tactic: Optional[str],
         module: Optional[str],
@@ -364,9 +374,15 @@ class GpuProver(BestFirstSearchProver):
             # tac_gen = RetrievalAugmentedGenerator.load(
             #     ckpt_path, device=torch.device("cuda"), freeze=True
             # )
-            tac_gen = SimpleRetrievalAugmentedGenerator(
-                model_path, device=torch.device("cuda"), **generator_config.dict()
-            )
+            if seq2seq:
+                tac_gen = SimpleRetrievalAugmentedGenerator(
+                    model_path, device=torch.device("cuda"), **generator_config.dict()
+                )
+            else:
+                tac_gen = CausalGenerator(
+                    model_path, device=torch.device("cuda"), **generator_config.dict()
+                )
+
             if tac_gen.retriever is not None:
                 if indexed_corpus_path is not None:
                     tac_gen.retriever.load_corpus(indexed_corpus_path)
@@ -389,6 +405,7 @@ class DistributedProver:
     def __init__(
         self,
         model_path: Optional[str],
+        seq2seq: bool,
         indexed_corpus_path: Optional[str],
         tactic: Optional[str],
         module: Optional[str],
@@ -412,9 +429,15 @@ class DistributedProver:
                 tac_gen = FixedTacticGenerator(tactic, module)
             else:
                 device = torch.device("cuda") if with_gpus else torch.device("cpu")
-                tac_gen = SimpleRetrievalAugmentedGenerator(
-                    model_path, device=device, **generator_config.dict()
-                )
+                if seq2seq:
+                    tac_gen = SimpleRetrievalAugmentedGenerator(
+                        model_path, device=device, **generator_config.dict()
+                    )
+                else:
+                    tac_gen = CausalGenerator(
+                        model_path, device=device, **generator_config.dict()
+                    )
+
                 if tac_gen.retriever is not None:
                     assert indexed_corpus_path is not None
                     tac_gen.retriever.load_corpus(indexed_corpus_path)
@@ -429,6 +452,7 @@ class DistributedProver:
             provers = [
                 GpuProver.remote(
                     model_path,
+                    seq2seq,
                     indexed_corpus_path,
                     tactic,
                     module,
@@ -444,11 +468,13 @@ class DistributedProver:
             provers = [
                 CpuProver.remote(
                     model_path,
+                    seq2seq,
                     indexed_corpus_path,
                     tactic,
                     module,
                     timeout=timeout,
                     num_sampled_tactics=num_sampled_tactics,
+                    generator_config=generator_config,
                     debug=debug,
                 )
                 for _ in range(num_cpus)
@@ -466,18 +492,31 @@ class DistributedProver:
     ) -> List[SearchResult]:
         """Parallel proof search for `theorems`. The order of the results is not guaranteed to match the order of the input."""
         if not self.distributed:
-            return [
-                self.prover.search(repo, thm, pos)
-                for thm, pos in zip_strict(theorems, positions)
-            ]
+            results = []
+            for i, (thm, pos) in enumerate(zip_strict(theorems, positions)):
+                results.append(self.prover.search(repo, thm, pos))
+                logger.info(
+                    "Finish proving {}/{} theorems.".format(i + 1, len(theorems))
+                )
 
         try:
-            results = list(
-                self.prover_pool.map_unordered(
-                    lambda p, x: p.search.remote(repo, x[0], x[1]),
-                    zip_strict(theorems, positions),
-                )
+            results = []
+            res_q = self.prover_pool.map_unordered(
+                lambda p, x: p.search.remote(repo, x[0], x[1]),
+                zip_strict(theorems, positions),
             )
+            cnt = 0
+            for r in res_q:
+                results.append(r)
+                cnt += 1
+                logger.info("Finish proving {}/{} theorems.".format(cnt, len(theorems)))
+
+            # results = list(
+            #     self.prover_pool.map_unordered(
+            #         lambda p, x: p.search.remote(repo, x[0], x[1]),
+            #         zip_strict(theorems, positions),
+            #     )
+            # )
         except ray.exceptions.RayActorError as ex:
             logger.error(ex)
             sys.exit(1)

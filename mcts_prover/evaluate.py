@@ -16,8 +16,9 @@ from lean_dojo import LeanGitRepo, Theorem, Pos, is_available_in_cache
 from generator.simplified_model import GeneratorConfig
 
 from common import set_logger
-from mcts_prover.mcts import Status, DistributedProver, MCTSConfig
+from mcts_prover.mcts_search import Status, DistributedProver, MCTSConfig
 from prover.evaluate import _get_theorems
+from transformers import AutoConfig, PretrainedConfig
 
 
 def evaluate(
@@ -83,8 +84,10 @@ def evaluate(
         save_tree_dir = save_tree_dir.absolute().as_posix()
         logger.info(f"Saving search trees to {save_tree_dir}")
 
+    ckpt_cfg: PretrainedConfig = AutoConfig.from_pretrained(ckpt_path)
     prover = DistributedProver(
         ckpt_path,
+        ckpt_cfg.is_encoder_decoder,
         indexed_corpus_path,
         tactic,
         module,

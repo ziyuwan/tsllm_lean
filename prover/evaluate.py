@@ -11,13 +11,14 @@ from loguru import logger
 from lean_dojo import Theorem
 from typing import List, Tuple, Optional
 from lean_dojo import LeanGitRepo, Theorem, Pos, is_available_in_cache
-from generator.simplified_model import GeneratorConfig
+from causal_generator.simplified_model import GeneratorConfig
 from datetime import datetime
 
 from common import set_logger
 from prover.proof_search import Status, DistributedProver
 from lean_dojo.data_extraction.lean import PURE_OFFLINE_MODE
 from pathlib import Path
+from transformers import AutoConfig, PretrainedConfig
 
 
 def _get_theorems(
@@ -179,9 +180,10 @@ def evaluate(
         length_penalty=length_penalty,
     )
     # Search for proofs using multiple concurrent provers.
-
+    ckpt_cfg: PretrainedConfig = AutoConfig.from_pretrained(ckpt_path)
     prover = DistributedProver(
         ckpt_path,
+        ckpt_cfg.is_encoder_decoder,
         indexed_corpus_path,
         tactic,
         module,
