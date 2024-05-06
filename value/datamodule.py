@@ -46,20 +46,19 @@ class ValueDataset(Dataset):
                         obj["value"] = 0.0
                 prompts_to_tokenize.append(obj["state"])
                 info_list.append((obj["state"], obj["value"]))
-        
+
         token_lengths = self.tokenizer.batch_encode_plus(
             prompts_to_tokenize, return_length=True
-        )["length"] 
+        )["length"]
 
         for tl, (s, v) in zip_strict(token_lengths, info_list):
             if tl <= self.max_seq_len:
                 data.append({"state": s, "value": v})
         return data
 
-
     def __len__(self):
         return len(self._data)
-    
+
     def __getitem__(self, index):
         state = self._data[index]["state"]
         v = self._data[index]["value"]
@@ -70,12 +69,9 @@ class ValueDataset(Dataset):
         value[-1] = v
         value_mask[-1] = 1
 
-        return dict(
-            input_ids=input_ids,
-            labels=value,
-            label_masks=value_mask
-        )
-    
+        return dict(input_ids=input_ids, labels=value, label_masks=value_mask)
+
+
 @dataclass
 class DataCollatorForValueDataset(object):
     """Collate examples for value fine-tuning."""
@@ -84,7 +80,8 @@ class DataCollatorForValueDataset(object):
 
     def __call__(self, instances: Sequence[Dict]) -> Dict[str, torch.Tensor]:
         input_ids, labels, label_masks = tuple(
-            [instance[key] for instance in instances] for key in ("input_ids", "labels", "label_masks")
+            [instance[key] for instance in instances]
+            for key in ("input_ids", "labels", "label_masks")
         )
         input_ids = torch.nn.utils.rnn.pad_sequence(
             input_ids, batch_first=True, padding_value=self.tokenizer.pad_token_id

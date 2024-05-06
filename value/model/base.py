@@ -21,7 +21,6 @@ from peft import (
 from loguru import logger
 
 
-
 class PreTrainedModelWrapper(nn.Module, transformers.utils.PushToHubMixin):
     """A wrapper around `transformers.PreTrainedModel`
 

@@ -80,8 +80,12 @@ class ValueHeadedLLM(PreTrainedModelWrapper):
 
         self.loss_fn: nn.MSELoss
 
-        loss = self.loss_fn(value[label_masks==1].view(-1), labels[label_masks==1].view(-1))
-        import pdb; pdb.set_trace()
+        loss = self.loss_fn(
+            value[label_masks == 1].view(-1), labels[label_masks == 1].view(-1)
+        )
+        import pdb
+
+        pdb.set_trace()
 
         return ValueHeadLMOutputWithPast(loss=loss, value=value)
 

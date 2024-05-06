@@ -12,14 +12,14 @@ if __name__ == "__main__":
     parser.add_argument("--dry_run", action="store_true")
 
     args = parser.parse_args()
-    
+
     _, test_theorems, _ = _get_theorems_from_files(
         args.data_path,
         split="test",
         file_path=None,
         full_name=None,
         name_filter=None,
-        num_theorems=None
+        num_theorems=None,
     )
     _, val_theorems, _ = _get_theorems_from_files(
         args.data_path,
@@ -27,7 +27,7 @@ if __name__ == "__main__":
         file_path=None,
         full_name=None,
         name_filter=None,
-        num_theorems=None
+        num_theorems=None,
     )
     theorems = test_theorems + val_theorems
 

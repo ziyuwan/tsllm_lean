@@ -13,8 +13,7 @@ model_kwargs = dict(
 
 
 model = ValueHeadedLLM.from_pretrained(
-    "../models/deepseek-math-7b-base/",
-    **model_kwargs
+    "../models/deepseek-math-7b-base/", **model_kwargs
 )
 
 tok = AutoTokenizer.from_pretrained("../models/deepseek-math-7b-base/")
@@ -25,12 +24,11 @@ v_ds = ValueDataset(
     use_neutral=True,
     neutral_as_negative=False,
     max_seq_len=512,
-    tokenizer=tok
+    tokenizer=tok,
 )
 
 dataloader = DataLoader(
-    v_ds, batch_size=2, shuffle=True,
-    collate_fn=DataCollatorForValueDataset(tok)
+    v_ds, batch_size=2, shuffle=True, collate_fn=DataCollatorForValueDataset(tok)
 )
 
 batch = next(iter(dataloader))

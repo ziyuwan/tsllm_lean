@@ -9,37 +9,47 @@ TOTAL_POSITIVE = 0
 TOTAL_NEGATIVE = 0
 TOTAL_NEUTRAL = 0
 
-def tranverse_and_write(node: Dict, writer, tactic: str=None, state_before:str=None):
-    if node["type"]=="InternalTreeNode":
+
+def tranverse_and_write(
+    node: Dict, writer, tactic: str = None, state_before: str = None
+):
+    if node["type"] == "InternalTreeNode":
         state = node["state"]["ts"]
         if node["status"] == "Status.OPEN":
-            v = 0.
+            v = 0.0
             global TOTAL_NEUTRAL
             if node["out_edges"]:
                 TOTAL_NEUTRAL += 1
         elif node["status"] == "Status.FAILED":
-            v = -1.
+            v = -1.0
             global TOTAL_NEGATIVE
             TOTAL_NEGATIVE += 1
         elif node["status"] == "Status.PROVED":
-            v = 1.
+            v = 1.0
             global TOTAL_POSITIVE
             TOTAL_POSITIVE += 1
         if v != 0 or node["out_edges"]:
-            writer.write({"state": state, "value": v, "tactic": tactic, "state_before": state_before})
+            writer.write(
+                {
+                    "state": state,
+                    "value": v,
+                    "tactic": tactic,
+                    "state_before": state_before,
+                }
+            )
             cnt = 1
         else:
             cnt = 0
         if node["out_edges"] is not None:
             for out_edge in node["out_edges"]:
-                cnt += tranverse_and_write(out_edge["dst"], writer, out_edge["tactic"], state)
+                cnt += tranverse_and_write(
+                    out_edge["dst"], writer, out_edge["tactic"], state
+                )
     else:
         cnt = 0
-    
+
     return cnt
 
-        
-    
 
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -61,23 +71,23 @@ if __name__ == "__main__":
     cnt = 0
 
     writer = jsonlines.open(WRITE_PATH, "w")
-    
+
     n_processed = 0
     for file_path in MERGE_DIR.glob(r"*.json"):
         # print(file_path.as_posix())
         data = json.load(open(file_path, "r"))
         r = data["result"]
-        if str(r['status']) == str(Status.PROVED):
+        if str(r["status"]) == str(Status.PROVED):
             num_proved += 1
-        elif str(r['status']) == str(Status.OPEN):
+        elif str(r["status"]) == str(Status.OPEN):
             num_timeout += 1
         else:
             num_failed += 1
         cnt += 1
-        llm_time += r['actor_time']
-        env_time += r['environment_time']
-        num_total_nodes += r['num_total_nodes']
-        num_searched_nodes += r['num_searched_nodes']
+        llm_time += r["actor_time"]
+        env_time += r["environment_time"]
+        num_total_nodes += r["num_total_nodes"]
+        num_searched_nodes += r["num_searched_nodes"]
 
         n_processed += tranverse_and_write(data["search_tree"], writer)
 
@@ -91,11 +101,13 @@ if __name__ == "__main__":
     print("avg Env Time:", env_time / cnt)
     print("avg Total Nodes:", num_total_nodes / cnt)
     print("avg Searched Nodes:", num_searched_nodes / cnt)
-    print("==  "*10)
+    print("==  " * 10)
     print("Total Searched Nodes", num_searched_nodes)
     print("Num processed nodes: {}".format(n_processed))
-    print("POSTIVE: {}, NEGATIVE: {}, NEUTRAL: {}".format(
-        TOTAL_POSITIVE, TOTAL_NEGATIVE, TOTAL_NEUTRAL
-    ))
+    print(
+        "POSTIVE: {}, NEGATIVE: {}, NEUTRAL: {}".format(
+            TOTAL_POSITIVE, TOTAL_NEGATIVE, TOTAL_NEUTRAL
+        )
+    )
 
     writer.close()
