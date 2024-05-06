@@ -20,6 +20,7 @@ from common import (
     remove_marks,
     format_tactic,
     format_augmented_state,
+    zip_strict,
 )
 
 IGNORE_INDEX = -100
@@ -75,7 +76,7 @@ class GeneratorDataset(Dataset):
         token_lengths = self.tokenizer.batch_encode_plus(
             prompts_to_tokenize, return_length=True
         )["length"]
-        for (thm, tac, state, tactic), tok_len in zip(info_list, token_lengths):
+        for (thm, tac, state, tactic), tok_len in zip_strict(info_list, token_lengths):
             if tok_len <= self.max_seq_len:
                 data.append(
                     {
