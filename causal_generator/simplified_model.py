@@ -73,8 +73,6 @@ def _generate_fastchat(
     return results["text"], cum_logps
 
 
-
-
 class SimpleRetrievalAugmentedGenerator(TacticGenerator):
     def __init__(
         self,

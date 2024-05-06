@@ -20,6 +20,7 @@ from mcts_prover.mcts_search import Status, DistributedProver, MCTSConfig
 from prover.evaluate import _get_theorems
 from transformers import AutoConfig, PretrainedConfig
 
+
 def evaluate(
     data_path: str,
     exp_id: Optional[str] = None,
